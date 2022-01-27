@@ -1,5 +1,14 @@
 import random
 
+'''
+Cactus class
+Each cactus is an obstacle for the dinosaur. They spawn on the right side
+of the screen and scroll to the left. If they aren't already on screen, they
+spawn at any moment with a 0.2 probability. If they touch the dinosaur, the game
+is over.
+'''
+
+
 class Cactus():
     def __init__(self, canvas, groundY, img, dinoCanvas, dinoImg):
         self.dx = -5
@@ -20,28 +29,17 @@ class Cactus():
     def getGameOver(self):
         return self.gameOver
 
+    # checks for collision with dinosaur by checking if their bounding boxes
+    # overlap
     def checkDinoCollision(self):
-        
-
-        # lx, ly, rx, ry = self.canvas.bbox(self.canvasObj)
-        # dinoLX, dinoLY, dinoRX, dinoRY = self.canvas.bbox(self.dinoCanvas)
-        # self.canvas.create_rectangle(lx, ly, rx, ry, outline="#fb0", fill="#fb0")
-        # self.canvas.create_rectangle(dinoLX, dinoLY, dinoRX, dinoRY, outline="#05f", fill="#05f")
         
         # L is bottom left point, R is top right point
         
         c = self.canvas.coords(self.canvasObj)
         lx, ly, rx, ry = c[0] - self.img.width()/2, c[1], self.img.width()/2 + c[0], c[1] - self.img.height()
-        # self.canvas.create_rectangle(lx, ly, rx, ry, outline="#fb0", fill="#fb0")
 
         c2 = self.canvas.coords(self.dinoCanvas)
         dinoLX, dinoLY, dinoRX, dinoRY = c2[0] - self.dinoImg.width()/2, c2[1], c2[0] + self.dinoImg.width()/2, c2[1] - self.dinoImg.height()
-        # self.canvas.create_rectangle(dinoLX, dinoLY, dinoRX, dinoRY, outline="#05f", fill="#05f")
-
-        # print(ly, ry)
-        # print("dino", dinoLY, dinoRY)
-        # print(self.canvas.coords(self.canvasObj), self.img.width(), self.img.height())
-        # print(self.canvas.coords(self.dinoCanvas), self.dinoImg.width(), self.dinoImg.height())
         
         # check x bounds
         if ((lx <= dinoRX and lx >= dinoLX) or 

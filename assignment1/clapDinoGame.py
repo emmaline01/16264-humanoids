@@ -3,12 +3,9 @@ import struct
 import math
 from tkinter import *
 import time
-from cactus import *
-#from PIL import ImageTk, Image  
+from cactus import * 
 
-
-# set up listening through microphone
-
+# microphone-related constants
 # modified from https://realpython.com/playing-and-recording-sound-python/#pyaudio
 # and https://stackoverflow.com/questions/4160175/detect-tap-with-pyaudio-from-live-mic/4160733
 SHORT_NORMALIZE = (1.0/32768.0)
@@ -18,16 +15,18 @@ channels = 2
 fs = 44100  # Record at 44100 samples per second
 recordSecs = .05
 framesPerBlock = int(fs * recordSecs)
-clapThreshold = 0.05
+clapThreshold = 0.06
 
 # gameOver = False
 tkAfter = None
 groundY = 150
 jumping = False
+cooldown = 0
 dinoStartY = None
 yDiff = None
 vel = None
 
+# set up listening through microphone
 p = pyaudio.PyAudio()  # Create an interface to PortAudio
 stream = p.open(format=sampleFormat,
     channels=channels,
@@ -37,9 +36,10 @@ stream = p.open(format=sampleFormat,
 
 # https://stackoverflow.com/questions/4160175/detect-tap-with-pyaudio-from-live-mic/4160733
 def findRMSAmplitude(block):
-    # RMS amplitude is defined as the square root of the 
-    # mean over time of the square of the amplitude.
-    # so we need to convert this string of bytes into 
+    # RMS amplitude is the square root of the 
+    # mean over time of the square of the amplitude
+
+    # convert this string of bytes into 
     # a string of 16-bit samples...
 
     # we will get one short out for each 
@@ -60,20 +60,22 @@ def findRMSAmplitude(block):
 
 # listen for if a sound block recorded is as loud as/louder than a clap
 def listenForClaps():
-    global jumping, vel, yDiff
-    if jumping:
-        return
+    global jumping, vel, yDiff, cooldown
     block = stream.read(framesPerBlock)
     rmsAmp = findRMSAmplitude(block)
+    if jumping:
+        return
+    elif cooldown > 0:
+        cooldown -= 1
+        return
     if rmsAmp > clapThreshold:
-        print("clap!")
         jumping = True
         vel = 6
         yDiff = vel
 
 # update the dino jump if it's jumping
 def dinoUpdate():
-    global yDiff, vel, jumping
+    global yDiff, vel, jumping, cooldown
     gravity = -0.3
 
     if jumping:
@@ -86,6 +88,7 @@ def dinoUpdate():
             # correct error by restoring dino to original y position
             _, currY, *_ = canvas.bbox(dinoCanvas)
             canvas.move(dinoCanvas, 0, dinoStartY - currY)
+            cooldown = 10
             jumping = False
             yDiff = 0
 
@@ -119,8 +122,6 @@ def onTkClose():
 
 #set up tkinter window
 window = Tk(className = "Dino Game")
-# window.geometry("200x200")
-# window.configure(bg = "white")
 canvas = Canvas(window, width=200, height=200)
 canvas.pack()
 title = Label(window, text="Dino Game - clap to jump")
@@ -137,8 +138,7 @@ cactus = PhotoImage(file="cactus.png")
 cactus = cactus.subsample(10)
 cactus1 = Cactus(canvas, groundY, cactus, dinoCanvas, dino)
 cactus2 = Cactus(canvas, groundY, cactus, dinoCanvas, dino)
-# cactus1Canvas = canvas.create_image(220, groundY, image=cactus, anchor="s")
-# cactus2Canvas = canvas.create_image(220, groundY, image=cactus, anchor="s")
+
 
 # queue up the first listenForClaps function call
 window.after(20, updateCanvas)
