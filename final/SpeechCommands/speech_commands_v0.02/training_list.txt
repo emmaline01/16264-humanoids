@@ -1,5 +1,0 @@
-homework/1_nohash_1.wav
-homework/1_nohash_2.wav
-homework/1_nohash_3.wav
-homework/1_nohash_4.wav
-homework/1_nohash_5.wav

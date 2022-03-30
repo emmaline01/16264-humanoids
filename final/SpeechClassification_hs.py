@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchaudio
 import sys
-import certifi
 
 import matplotlib.pyplot as plt
 import IPython.display as ipd
@@ -16,7 +15,7 @@ from torchaudio.datasets import SPEECHCOMMANDS
 import os
 
 torchaudio.USE_SOUNDFILE_LEGACY_INTERFACE = False
-torchaudio.set_audio_backend("sox_io") #https://mattip.github.io/audio/0.7/backend.html
+torchaudio.set_audio_backend("soundfile") #https://mattip.github.io/audio/0.7/backend.html
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,6 +49,7 @@ test_set = SubsetSC("testing")
 waveform, sample_rate, label, speaker_id, utterance_number = train_set[0]
 print("Shape of waveform: {}".format(waveform.size()))
 print("Sample rate of waveform: {}".format(sample_rate))
+print("utterance number: ", utterance_number)
 plt.plot(waveform.t().numpy())
 plt.show()
 
@@ -57,7 +57,7 @@ plt.show()
 new_sample_rate = 8000
 transform = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=new_sample_rate)
 transformed = transform(waveform)
-
+'''
 # find the list of labels available in the dataset
 # one label per unique word said
 labels = ['backward', 'bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'follow', 'forward', 'four', 'go', 'happy', 'house', 'learn', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 'six', 'stop', 'three', 'tree', 'two', 'up', 'visual', 'wow', 'yes', 'zero']
@@ -333,3 +333,5 @@ if "google.colab" in sys.modules:
     waveform, sample_rate = record()
     print(f"Predicted: {predict(waveform)}.")
     ipd.Audio(waveform.numpy(), rate=sample_rate)
+
+'''

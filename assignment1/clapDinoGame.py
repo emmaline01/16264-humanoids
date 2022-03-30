@@ -63,7 +63,6 @@ def listenForClaps():
     global jumping, vel, yDiff, cooldown
     block = stream.read(framesPerBlock)
     rmsAmp = findRMSAmplitude(block)
-    print(rmsAmp)
     if jumping:
         return
     elif cooldown > 0:
@@ -108,7 +107,6 @@ def updateCanvas():
         tkAfter = window.after(20, updateCanvas)
     else:
         tkAfter = None
-    tkAfter = window.after(20, updateCanvas)
 
 # close game/stop recording
 def onTkClose():
