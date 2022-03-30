@@ -1,3 +1,4 @@
+ 
 # referenced https://pytorch.org/tutorials/intermediate/speech_command_classification_with_torchaudio_tutorial.html
 import torch
 import torch.nn as nn
@@ -5,6 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchaudio
 import sys
+# import certifi
 
 import matplotlib.pyplot as plt
 import IPython.display as ipd
@@ -23,7 +25,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class SubsetSC(SPEECHCOMMANDS):
     def __init__(self, subset: str = None):
-        super().__init__(os.getcwd(), download=True)
+        super().__init__(os.getcwd(), download=False)
 
         def load_list(filename):
             filepath = os.path.join(self._path, filename)
@@ -41,22 +43,24 @@ class SubsetSC(SPEECHCOMMANDS):
 
 
 # Create training and testing split of the data. We do not use validation in this tutorial.
-train_set = SubsetSC("training")
+
 test_set = SubsetSC("testing")
+train_set = SubsetSC("training")
 
 # manipulate one audio file
 
-waveform, sample_rate, label, speaker_id, utterance_number = train_set[0]
-# print("Shape of waveform: {}".format(waveform.size()))
-# print("Sample rate of waveform: {}".format(sample_rate))
-# plt.plot(waveform.t().numpy())
-# plt.show()
+waveform, sample_rate, label, speaker_id, utterance_number = test_set[0]
+print("Shape of waveform: {}".format(waveform.size()))
+print("Sample rate of waveform: {}".format(sample_rate))
+plt.plot(waveform.t().numpy())
+plt.show()
 
 # transform data by downsampling
 new_sample_rate = 8000
 transform = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=new_sample_rate)
 transformed = transform(waveform)
 
+'''
 # find the list of labels available in the dataset
 # one label per unique word said
 labels = ['backward', 'bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'follow', 'forward', 'four', 'go', 'happy', 'house', 'learn', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 'six', 'stop', 'three', 'tree', 'two', 'up', 'visual', 'wow', 'yes', 'zero']
@@ -240,7 +244,7 @@ def test(model, epoch):
     print(f"\nTest Epoch: {epoch}\tAccuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
 
 log_interval = 20
-n_epoch = 2
+n_epoch = 3
 
 pbar_update = 1 / (len(train_loader) + len(test_loader))
 losses = []
@@ -252,3 +256,85 @@ with tqdm(total=n_epoch) as pbar:
         train(model, epoch, log_interval)
         test(model, epoch)
         scheduler.step()
+
+# PREDICTING
+def predict(tensor):
+    # Use the model to predict the label of the waveform
+    tensor = tensor.to(device)
+    tensor = transform(tensor)
+    tensor = model(tensor.unsqueeze(0))
+    tensor = get_likely_index(tensor)
+    tensor = index_to_label(tensor.squeeze())
+    return tensor
+
+
+waveform, sample_rate, utterance, *_ = train_set[-1]
+ipd.Audio(waveform.numpy(), rate=sample_rate)
+
+print(f"Expected: {utterance}. Predicted: {predict(waveform)}.")
+
+# testing out the prediction with files
+for i, (waveform, sample_rate, utterance, *_) in enumerate(test_set):
+    output = predict(waveform)
+    if output != utterance:
+        ipd.Audio(waveform.numpy(), rate=sample_rate)
+        print(f"Data point #{i}. Expected: {utterance}. Predicted: {output}.")
+        break
+else:
+    print("All examples in this dataset were correctly classified!")
+    print("In this case, let's just look at the last data point")
+    ipd.Audio(waveform.numpy(), rate=sample_rate)
+    print(f"Data point #{i}. Expected: {utterance}. Predicted: {output}.")
+
+
+# RECORDING (may have to run this part in google colab if you can't get it installed as a package)
+def record(seconds=1):
+
+    from google.colab import output as colab_output
+    from base64 import b64decode
+    from io import BytesIO
+    from pydub import AudioSegment
+
+    RECORD = (
+        b"const sleep  = time => new Promise(resolve => setTimeout(resolve, time))\n"
+        b"const b2text = blob => new Promise(resolve => {\n"
+        b"  const reader = new FileReader()\n"
+        b"  reader.onloadend = e => resolve(e.srcElement.result)\n"
+        b"  reader.readAsDataURL(blob)\n"
+        b"})\n"
+        b"var record = time => new Promise(async resolve => {\n"
+        b"  stream = await navigator.mediaDevices.getUserMedia({ audio: true })\n"
+        b"  recorder = new MediaRecorder(stream)\n"
+        b"  chunks = []\n"
+        b"  recorder.ondataavailable = e => chunks.push(e.data)\n"
+        b"  recorder.start()\n"
+        b"  await sleep(time)\n"
+        b"  recorder.onstop = async ()=>{\n"
+        b"    blob = new Blob(chunks)\n"
+        b"    text = await b2text(blob)\n"
+        b"    resolve(text)\n"
+        b"  }\n"
+        b"  recorder.stop()\n"
+        b"})"
+    )
+    RECORD = RECORD.decode("ascii")
+
+    print(f"Recording started for {seconds} seconds.")
+    display(ipd.Javascript(RECORD))
+    s = colab_output.eval_js("record(%d)" % (seconds * 1000))
+    print("Recording ended.")
+    b = b64decode(s.split(",")[1])
+
+    fileformat = "wav"
+    filename = f"_audio.{fileformat}"
+    AudioSegment.from_file(BytesIO(b)).export(filename, format=fileformat)
+    return torchaudio.load(filename)
+
+
+# Detect whether notebook runs in google colab
+if "google.colab" in sys.modules:
+    waveform, sample_rate = torchaudio.load("_audio.wav")#record()
+    print(f"Predicted: {predict(waveform)}.")
+    ipd.Audio(waveform.numpy(), rate=sample_rate)
+
+'''
