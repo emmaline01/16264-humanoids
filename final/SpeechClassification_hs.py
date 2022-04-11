@@ -45,24 +45,31 @@ train_set = SubsetSC("training")
 test_set = SubsetSC("testing")
 
 # manipulate one audio file
+print("train", len(train_set))
+print("test", len(test_set))
 
 waveform, sample_rate, label, speaker_id, utterance_number = train_set[0]
 print("Shape of waveform: {}".format(waveform.size()))
 print("Sample rate of waveform: {}".format(sample_rate))
 print("utterance number: ", utterance_number)
-plt.plot(waveform.t().numpy())
-plt.show()
+# plt.plot(waveform.t().numpy())
+# plt.show()
+
 
 # transform data by downsampling
 new_sample_rate = 8000
 transform = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=new_sample_rate)
 transformed = transform(waveform)
+
+labels = sorted(list(set(datapoint[2] for datapoint in train_set)))
+print(labels)
+
 '''
 # find the list of labels available in the dataset
 # one label per unique word said
 labels = ['backward', 'bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'follow', 'forward', 'four', 'go', 'happy', 'house', 'learn', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 'six', 'stop', 'three', 'tree', 'two', 'up', 'visual', 'wow', 'yes', 'zero']
 # TODO: uncomment if you want to spend 5 minutes generating that list. sorted(list(set(datapoint[2] for datapoint in train_set)))
-
+'''
 # encode words using the labels list
 def label_to_index(word):
     # Return the position of the word in labels
@@ -93,7 +100,8 @@ def collate_fn(batch):
 
     # Gather in lists, and encode labels as indices
     for waveform, _, label, *_ in batch:
-        tensors += [waveform]
+        w = torch.narrow(waveform, 0, 0, 1) # chop off random extra dimensions
+        tensors += [w]
         targets += [label_to_index(label)]
 
     # Group the list of tensors into a batched tensor
@@ -166,7 +174,7 @@ class M5(nn.Module):
         x = self.fc1(x)
         return F.log_softmax(x, dim=2)
 
-model = M5(n_input=transformed.shape[0], n_output=len(labels))
+model = M5(n_input=1, n_output=len(labels)) # input arg was transformed.shape[0] (which should be 1)
 model.to(device)
 # print(model)
 
@@ -241,7 +249,7 @@ def test(model, epoch):
     print(f"\nTest Epoch: {epoch}\tAccuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
 
 log_interval = 20
-n_epoch = 2
+n_epoch = 150
 
 pbar_update = 1 / (len(train_loader) + len(test_loader))
 losses = []
@@ -254,6 +262,7 @@ with tqdm(total=n_epoch) as pbar:
         test(model, epoch)
         scheduler.step()
 
+'''
 # PREDICTING
 def predict(tensor):
     # Use the model to predict the label of the waveform
