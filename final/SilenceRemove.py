@@ -129,8 +129,8 @@ def vad_collector(sample_rate, frame_duration_ms,
         yield b''.join([f.bytes for f in voiced_frames])
 
 
-def trimSilence(args):
-
+def trimSilence(filename, trimmedFileName):
+    args = ['2', filename]
 
     audio, sample_rate = read_wave(args[1])
     vad = webrtcvad.Vad(int(args[0]))
@@ -143,8 +143,8 @@ def trimSilence(args):
 
     joinedaudio = b"".join(concataudio)
 
-    write_wave("Non-Silenced-Audio.wav", joinedaudio, sample_rate)
+    write_wave(trimmedFileName, joinedaudio, sample_rate)
 
 
 if __name__ == '__main__':
-    trimSilence(['2', '1_nohash_11.wav'])
+    trimSilence('1_nohash_11_untrimmed.wav', '1_nohash_11.wav')

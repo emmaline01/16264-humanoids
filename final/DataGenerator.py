@@ -3,17 +3,17 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 import os
 import numpy as np
-from SilenceRemove import main
+from SilenceRemove import trimSilence
 
 word = "homework"
 currFileNum = 11
-totalRecordings = 1
+totalRecordings = 5
 
 def record_audio(filename):
     
     #frequency
     fs=32000  #frames per second  
-    duration = 10  # seconds in integer
+    duration = 2  # seconds in integer
     
     print("Recording...")
 
@@ -25,10 +25,12 @@ def record_audio(filename):
     #write the data in filename and save it
     write(filename, fs, myrecording)
 
+
 folder = "NewRecordings\\" + word + "\\"
 if (not os.path.isdir(folder)):
     os.mkdir(folder)
-folder = ""
+
 for i in range(currFileNum, currFileNum + totalRecordings):
     filename = folder + "1_nohash_" + str(i) + ".wav"
     record_audio(filename)
+    trimSilence(filename, filename)
