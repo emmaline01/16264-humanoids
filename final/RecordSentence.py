@@ -89,7 +89,7 @@ def vad_collector(sample_rate, frame_duration_ms,
     for frame in frames:
         is_speech = vad.is_speech(frame.bytes, sample_rate)
 
-        # sys.stdout.write('1' if is_speech else '0')
+        #sys.stdout.write('1' if is_speech else '0')
         if not triggered:
             ring_buffer.append((frame, is_speech))
             num_voiced = len([f for f, speech in ring_buffer if speech])
@@ -98,7 +98,7 @@ def vad_collector(sample_rate, frame_duration_ms,
             # TRIGGERED state.
             if num_voiced > 0.9 * ring_buffer.maxlen:
                 triggered = True
-                # sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
+                #sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
                 # We want to yield all the audio we see from now until
                 # we are NOTTRIGGERED, but we have to start with the
                 # audio that's already in the ring buffer.
@@ -115,7 +115,7 @@ def vad_collector(sample_rate, frame_duration_ms,
             # unvoiced, then enter NOTTRIGGERED and yield whatever
             # audio we've collected.
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
-                # sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+                #sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
                 triggered = False
                 yield b''.join([f.bytes for f in voiced_frames])
                 ring_buffer.clear()
@@ -123,13 +123,14 @@ def vad_collector(sample_rate, frame_duration_ms,
     # if triggered:
     #     sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
     # sys.stdout.write('\n')
+    
     # If we have any leftover voiced audio when we run out of input,
     # yield it.
     if voiced_frames:
         yield b''.join([f.bytes for f in voiced_frames])
 
 
-def trimSilence(filename, trimmedFileName):
+def separateWords(filename, trimmedFileName):
     args = ['2', filename]
 
     audio, sample_rate = read_wave(args[1])
@@ -141,10 +142,9 @@ def trimSilence(filename, trimmedFileName):
     # Segmenting the Voice audio and save it in list as bytes
     concataudio = [segment for segment in segments]
 
-    joinedaudio = b"".join(concataudio)
-
-    write_wave(trimmedFileName, joinedaudio, sample_rate)
+    for i in range(len(concataudio)):
+        write_wave(trimmedFileName[:-4] + str(i) + ".wav", concataudio[i], sample_rate)
 
 
 if __name__ == '__main__':
-    trimSilence('1_nohash_11_untrimmed.wav', '1_nohash_11.wav')
+    separateWords('test.wav', 'test_trimmed.wav')
