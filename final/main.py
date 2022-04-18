@@ -1,10 +1,25 @@
+'''
+Run the Arduino file Touch_control and this file to run our final project.
+This file trains an ML model, then waits for button input from the Arduino.
+Given that, it starts recording for 10 seconds. It then parses what was recorded
+into one word per file, predicts what each word was, and sends its prediction to
+the Arduino to for the robot to write.
+
+'''
+
+
 from SpeechClassification_hs import *
 from Record import *
 from RecordSentence import *
+from Communications import *
 from os.path import exists
+
+# set up comms with Arduino
+ser = initComms("COM3")
 
 
 # create the ML model
+print("Setting up ML model...")
 model = M5(n_input=1, n_output=len(labels))
 model.to(device)
 
@@ -29,18 +44,36 @@ with tqdm(total=n_epoch) as pbar:
         scheduler.step()
 
 
-i = 0
-while (True):
-    val = input("\nPress enter to record for 10sec:")
+# record, predict what was said, and tell Arduino to write it
+for i in range(2): # do this an arbitrary number of times
+    print("\n\nWaiting to sense touch sensor...")
+
+    # start recording when Arduino senses button press
+    waitForSpecificResponse(ser, "button")
     recordAudio("main" + str(i) + "_.wav")
     separateWords("main" + str(i) + "_.wav", "main" + str(i) + "_.wav")
 
+
+    # each numbered file is a separate word
+    # go through each file and predict each word
     j = 0
     filename = "main" + str(i) + "_" + str(j)+ ".wav"
+    stringToWrite = ""
     while exists(filename):
         waveform, sample_rate = torchaudio.load(filename)
         ipd.Audio(waveform.numpy(), rate=sample_rate)
-        print(f"Predicted: {predict(model, waveform)}")
+
+        prediction = predict(model, waveform)
+        stringToWrite += prediction + " "
 
         j += 1
         filename = "main" + str(i) + "_" + str(j)+ ".wav"
+    stringToWrite = stringToWrite.strip()
+
+    # send string to robot to write
+    print(f"Predicted: {stringToWrite}")
+    stringToWrite = encodeForArduino(stringToWrite)
+    sendCommandToArduino(ser, stringToWrite)
+    waitForSpecificResponse(ser, "starting to write")
+
+closeComms(ser)
