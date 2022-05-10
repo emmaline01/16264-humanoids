@@ -147,4 +147,4 @@ def separateWords(filename, trimmedFileName):
 
 
 if __name__ == '__main__':
-    separateWords('test.wav', 'test_trimmed.wav')
+    separateWords('c.wav', 'c.wav')

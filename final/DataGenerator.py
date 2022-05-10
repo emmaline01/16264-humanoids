@@ -11,9 +11,9 @@ import os
 import numpy as np
 from SilenceRemove import trimSilence
 
-word = "three"
-currFileNum = 31 # inclusive
-totalRecordings = 17
+word = "due"
+currFileNum = 70 # inclusive
+totalRecordings = 3
 
 def recordAudio(filename):
     #frequency

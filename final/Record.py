@@ -20,5 +20,5 @@ def recordAudio(filename):
 
 
 if __name__ == "__main__":
-    filename ="NewRecordings\\new_record.wav"
+    filename ="c.wav"
     recordAudio(filename)

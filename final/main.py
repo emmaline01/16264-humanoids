@@ -31,7 +31,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 # reduce the learning after 20 epochs by a factor of 10
 
 log_interval = 20
-n_epoch = 110
+n_epoch = 80
 
 pbar_update = 1 / (len(train_loader) + len(test_loader))
 losses = []
@@ -43,19 +43,13 @@ with tqdm(total=n_epoch) as pbar:
         test(model, epoch, pbar, pbar_update)
         scheduler.step()
 
-
-# record, predict what was said, and tell Arduino to write it
-for i in range(2): # do this an arbitrary number of times
-    print("\n\nWaiting to sense touch sensor...")
-
-    # start recording when Arduino senses button press
-    waitForSpecificResponse(ser, "button")
+# just test the ML model only (without Arduino)
+while (True):
+    i = 0
+    input("press enter to record")
     recordAudio("main" + str(i) + "_.wav")
     separateWords("main" + str(i) + "_.wav", "main" + str(i) + "_.wav")
 
-
-    # each numbered file is a separate word
-    # go through each file and predict each word
     j = 0
     filename = "main" + str(i) + "_" + str(j)+ ".wav"
     stringToWrite = ""
@@ -69,11 +63,38 @@ for i in range(2): # do this an arbitrary number of times
         j += 1
         filename = "main" + str(i) + "_" + str(j)+ ".wav"
     stringToWrite = stringToWrite.strip()
+    print(stringToWrite)
 
-    # send string to robot to write
-    print(f"Predicted: {stringToWrite}")
-    stringToWrite = encodeForArduino(stringToWrite)
-    sendCommandToArduino(ser, stringToWrite)
-    waitForSpecificResponse(ser, "starting to write")
+# record, predict what was said, and tell Arduino to write it
+# for i in range(2): # do this an arbitrary number of times
+#     print("\n\nWaiting to sense touch sensor...")
 
-closeComms(ser)
+#     # start recording when Arduino senses button press
+#     waitForSpecificResponse(ser, "button")
+#     recordAudio("main_" + str(i) + "_.wav")
+#     separateWords("main_" + str(i) + "_.wav", "main_" + str(i) + "_.wav")
+
+
+#     # each numbered file is a separate word
+#     # go through each file and predict each word
+#     j = 0
+#     filename = "main_" + str(i) + "_" + str(j)+ ".wav"
+#     stringToWrite = ""
+#     while exists(filename):
+#         waveform, sample_rate = torchaudio.load(filename)
+#         ipd.Audio(waveform.numpy(), rate=sample_rate)
+
+#         prediction = predict(model, waveform)
+#         stringToWrite += prediction + " "
+
+#         j += 1
+#         filename = "main_" + str(i) + "_" + str(j)+ ".wav"
+#     stringToWrite = stringToWrite.strip()
+
+#     # send string to robot to write
+#     print(f"Predicted: {stringToWrite}")
+#     stringToWrite = encodeForArduino(stringToWrite)
+#     sendCommandToArduino(ser, stringToWrite)
+#     waitForSpecificResponse(ser, "starting to write")
+
+# closeComms(ser)

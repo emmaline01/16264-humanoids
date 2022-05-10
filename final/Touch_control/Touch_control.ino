@@ -30,7 +30,7 @@ void run()
     return;
 
   // check touch sensor
-  if (!digitalRead(TOUCH) and !wasPressed) {
+  if (!digitalRead(TOUCH)) {
     // detected touch
     Serial.println("button");
     digitalWrite(LED, HIGH);
