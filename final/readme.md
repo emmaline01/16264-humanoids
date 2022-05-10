@@ -1,0 +1,1 @@
+To run the Letter_H_test Arduino code, download the draw_H.rob action group file, upload it in the xArm software, and through the software download it as number 0 to the xArm robot. Then the Arduino code will make the robot draw an H (otherwise nothing will happen).
