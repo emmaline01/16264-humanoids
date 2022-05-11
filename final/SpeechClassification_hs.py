@@ -128,7 +128,7 @@ test_loader = torch.utils.data.DataLoader(
 
 ## CONVOLUTIONAL NEURAL NETWORK
 class M5(nn.Module):
-    def __init__(self, n_input=1, n_output=35, stride=16, n_channel=32):
+    def __init__(self, n_input, n_output, stride=16, n_channel=32):
         super().__init__()
         self.conv1 = nn.Conv1d(n_input, n_channel, kernel_size=80, stride=stride)
         self.bn1 = nn.BatchNorm1d(n_channel)
@@ -229,7 +229,7 @@ def predict(model, tensor):
 
 if __name__ == "__main__":
     # create the ML model
-    model = M5(n_input=1, n_output=len(labels)) # n_input=transformed.shape[0]
+    model = M5(n_input=transformed.shape[0], n_output=len(labels))
     model.to(device)
 
 

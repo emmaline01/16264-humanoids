@@ -20,7 +20,7 @@ ser = initComms("COM3")
 
 # create the ML model
 print("Setting up ML model...")
-model = M5(n_input=1, n_output=len(labels))
+model = M5(n_input=transformed.shape[0], n_output=len(labels))
 model.to(device)
 
 
